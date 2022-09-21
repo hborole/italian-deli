@@ -3,6 +3,7 @@ const express = require('express');
 require('dotenv').config();
 require('express-async-errors');
 const cors = require('cors');
+const cookieSession = require('cookie-session');
 
 // db config
 const { db } = require('./src/configs/db.config.js');
@@ -16,8 +17,14 @@ const authRoutes = require('./src/routes/auth.routes.js');
 
 const app = express();
 
+app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json());
+app.use(
+  cookieSession({
+    signed: false,
+  })
+);
 
 app.use('/auth', authRoutes);
 
