@@ -19,6 +19,7 @@ const currentUser = require('./src/middlewares/current-user');
 const authRoutes = require('./src/routes/auth.routes');
 const categoryRoutes = require('./src/routes/category.routes');
 const productRoutes = require('./src/routes/product.routes');
+const customerRoutes = require('./src/routes/customer.routes');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use(currentUser);
 
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/customers', customerRoutes);
 
 app.all('*', async (req, res) => {
   throw new NotFoundError();
