@@ -12,10 +12,13 @@ const { db } = require('./src/configs/db.config');
 const errorHandler = require('./src/middlewares/error-handler');
 const NotFoundError = require('./src/errors/not-found-error');
 
+// middlewares
+const currentUser = require('./src/middlewares/current-user');
+
 // routes
 const authRoutes = require('./src/routes/auth.routes');
 const categoryRoutes = require('./src/routes/category.routes');
-const currentUser = require('./src/middlewares/current-user');
+const productRoutes = require('./src/routes/product.routes');
 
 const app = express();
 
@@ -34,6 +37,7 @@ app.use('/api/auth', authRoutes);
 app.use(currentUser);
 
 app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
 
 app.all('*', async (req, res) => {
   throw new NotFoundError();

@@ -18,7 +18,7 @@ const createCategory = async (req, res) => {
   try {
     const newCategory = await query(
       'INSERT INTO categories (name, isActive, image) VALUES (?, ?, ?)',
-      [name, isActive ? isActive : true, image]
+      [cleanName, isActive ? isActive : true, image]
     );
 
     console.log('Category created successfully...');
