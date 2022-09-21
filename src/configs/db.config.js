@@ -1,3 +1,4 @@
+const util = require('util');
 const mysql = require('mysql');
 
 const db = mysql.createConnection({
@@ -8,4 +9,8 @@ const db = mysql.createConnection({
   database: process.env.RDS_DB_NAME,
 });
 
-module.exports = db;
+const query = (sql, args) => {
+  return util.promisify(db.query).call(db, sql, args);
+};
+
+module.exports = { db, query };

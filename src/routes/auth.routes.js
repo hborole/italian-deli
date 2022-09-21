@@ -14,7 +14,8 @@ router.post(
     body('password')
       .trim()
       .isLength({ min: 4, max: 20 })
-      .withMessage('Password must be valid'),
+      .withMessage('Password must within 4 and 20 characters'),
+    body('first_name').trim().notEmpty().withMessage('First name is required'),
   ],
   validateRequest,
   authController.signUp

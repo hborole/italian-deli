@@ -1,13 +1,29 @@
+// Import the SQL db connection
+const { query } = require('../configs/db.config');
+const BadRequestError = require('../errors/bad-request-error');
+
 const signUp = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, first_name, last_name } = req.body;
+
+  // Check if the user still exists
+  const users = await query('SELECT * FROM users WHERE email = ?', [email]);
+
+  if (users.length > 0) {
+    throw new BadRequestError('Email in use');
+  }
+
   try {
-    const user = await User.create({ email, password });
-    const token = createToken(user._id);
-    res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
-    res.status(201).json({ user: user._id });
-  } catch (err) {
-    const errors = handleErrors(err);
-    res.status(400).json({ errors });
+    // Create a new user
+    const newUser = await query(
+      'INSERT INTO users (email, password, first_name, last_name) VALUES (?, ?, ?, ?)',
+      [email, password, first_name, last_name]
+    );
+
+    console.log(`User created successfully...`, newUser);
+    res.status(201).send();
+  } catch (error) {
+    console.log(error);
+    throw new BadRequestError('Something went wrong');
   }
 };
 

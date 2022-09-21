@@ -5,7 +5,7 @@ require('express-async-errors');
 const cors = require('cors');
 
 // db config
-const db = require('./src/configs/db.config.js');
+const { db } = require('./src/configs/db.config.js');
 
 // errors
 const errorHandler = require('./src/middlewares/error-handler.js');
@@ -34,7 +34,6 @@ db.connect((err) => {
   }
 
   console.log('Connection established');
-
   app.listen(process.env.PORT, () => {
     console.log(`Server started on port ${process.env.PORT}`);
   });
