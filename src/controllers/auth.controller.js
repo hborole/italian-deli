@@ -33,6 +33,7 @@ const signUp = async (req, res) => {
         id: newUser.insertId,
         email,
         first_name,
+        isAdmin: true,
       },
       process.env.JWT_KEY
     );
@@ -73,6 +74,7 @@ const signIn = async (req, res) => {
       id: user.id,
       email,
       first_name: user.first_name,
+      isAdmin: true,
     },
     process.env.JWT_KEY
   );
