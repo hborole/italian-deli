@@ -6,14 +6,16 @@ const cors = require('cors');
 const cookieSession = require('cookie-session');
 
 // db config
-const { db } = require('./src/configs/db.config.js');
+const { db } = require('./src/configs/db.config');
 
 // errors
-const errorHandler = require('./src/middlewares/error-handler.js');
-const NotFoundError = require('./src/errors/not-found-error.js');
+const errorHandler = require('./src/middlewares/error-handler');
+const NotFoundError = require('./src/errors/not-found-error');
 
 // routes
-const authRoutes = require('./src/routes/auth.routes.js');
+const authRoutes = require('./src/routes/auth.routes');
+const categoryRoutes = require('./src/routes/category.routes');
+const currentUser = require('./src/middlewares/current-user');
 
 const app = express();
 
@@ -26,7 +28,12 @@ app.use(
   })
 );
 
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
+
+// Let's extract the current user if required for authentication purposes
+app.use(currentUser);
+
+app.use('/api/categories', categoryRoutes);
 
 app.all('*', async (req, res) => {
   throw new NotFoundError();

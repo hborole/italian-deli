@@ -25,7 +25,7 @@ const signUp = async (req, res) => {
       [email, hashedPassword, first_name, last_name]
     );
 
-    console.log(`User created successfully...`, newUser);
+    console.log(`User created successfully...`);
 
     // Generate a JWT
     const userJwt = jwt.sign(
