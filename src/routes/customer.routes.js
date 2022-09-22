@@ -44,7 +44,7 @@ router.put(
   customerController.update
 );
 
-router.get('/', customerController.getCustomers);
+router.get('/', requireAuth, customerController.getCustomers);
 
 router.get('/signout', customerController.signOut);
 
