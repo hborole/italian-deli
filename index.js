@@ -2,6 +2,7 @@
 const express = require('express');
 require('dotenv').config();
 require('express-async-errors');
+const { json } = require('body-parser');
 const cors = require('cors');
 const cookieSession = require('cookie-session');
 
@@ -25,8 +26,13 @@ const orderRoutes = require('./src/routes/order.routes');
 const app = express();
 
 app.set('trust proxy', true);
-app.use(cors());
-app.use(express.json());
+app.use(json());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
 app.use(
   cookieSession({
     signed: false,
