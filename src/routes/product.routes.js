@@ -52,6 +52,15 @@ router.delete(
   productController.deleteProduct
 );
 
+// Upload image
+router.post(
+  '/upload',
+  requireAuth,
+  [body('name').notEmpty().withMessage('Filename is required')],
+  validateRequest,
+  productController.uploadImage
+);
+
 // --------------- ITEMS ---------------------
 
 router.post(

@@ -1,5 +1,6 @@
 const { query } = require('../configs/db.config');
 const BadRequestError = require('../errors/bad-request-error');
+const s3 = require('../configs/aws.config');
 
 const createProduct = async (req, res) => {
   const { name, description, isActive, image, isFeatured, price, category_id } =
@@ -153,6 +154,20 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// Get signed url for uploading image to s3
+
+const uploadImage = async (req, res) => {
+  const { name } = req.body;
+
+  const url = await s3.getSignedUrlPromise('putObject', {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: name,
+    Expires: 60,
+  });
+
+  res.status(200).send({ name, url });
+};
+
 // --------------- ITEMS ---------------------
 
 const addItem = async (req, res) => {
@@ -229,6 +244,7 @@ module.exports = {
   createProduct,
   getProducts,
   getProduct,
+  uploadImage,
   updateProduct,
   deleteProduct,
   addItem,
