@@ -1,5 +1,28 @@
 const { query } = require('../configs/db.config');
 const BadRequestError = require('../errors/bad-request-error');
+const s3 = require('../configs/aws.config');
+
+const getUploadURL = async (req, res) => {
+  const { filename, fileType } = req.query;
+
+  if (!filename) {
+    throw new BadRequestError('Filename is required');
+  }
+
+  if (!fileType) {
+    throw new BadRequestError('File Type is required');
+  }
+
+  const url = await s3.getSignedUrlPromise('putObject', {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: 'categories/' + filename,
+    ContentType: fileType,
+    Expires: 60 * 5,
+  });
+
+  console.log('Upload URL generated successfully...');
+  res.status(200).send({ url });
+};
 
 const createCategory = async (req, res) => {
   const { name, isActive, image } = req.body;
@@ -50,14 +73,25 @@ const getCategory = async (req, res) => {
   }
 
   try {
-    const category = await query('SELECT * FROM categories WHERE id = ?', [id]);
+    const result = await query('SELECT * FROM categories WHERE id = ?', [id]);
 
-    if (category.length === 0) {
+    if (result.length === 0) {
       throw new BadRequestError(`Category doesn't exist`);
     }
 
-    console.log(`Category found: ${category[0].name}`);
-    res.status(200).send({ category: category[0] });
+    let category = result[0];
+
+    category = {
+      ...category,
+      imageUrl: await s3.getSignedUrl('getObject', {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: 'categories/' + category.image,
+      }),
+    };
+
+    console.log(`Category found: ${category.name}`);
+
+    res.status(200).send({ category });
   } catch (err) {
     console.log('Error while get category: ', err);
     throw new BadRequestError('Something went wrong');
@@ -120,6 +154,7 @@ const deleteCategory = async (req, res) => {
 };
 
 module.exports = {
+  getUploadURL,
   createCategory,
   getCategories,
   getCategory,

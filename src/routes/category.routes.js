@@ -6,11 +6,18 @@ const categoryController = require('../controllers/category.controller');
 
 const router = require('express').Router();
 
+// Get signed URL for uploading image to S3
+router.get('/upload', requireAuth, categoryController.getUploadURL);
+
 // Create Category
 router.post(
   '/',
   requireAuth,
-  [body('name').trim().notEmpty().withMessage('Name is required')],
+  [
+    body('name').trim().notEmpty().withMessage('Name is required'),
+    body('isActive').isBoolean().withMessage('isActive must be a boolean'),
+    body('image').trim().notEmpty().withMessage('Image is required'),
+  ],
   validateRequest,
   categoryController.createCategory
 );
@@ -28,6 +35,7 @@ router.put(
   [
     body('id').notEmpty().withMessage('ID is required'),
     body('name').trim().notEmpty().withMessage('Name is required'),
+    body('image').trim().notEmpty().withMessage('Image is required'),
   ],
   validateRequest,
   categoryController.updateCategory
