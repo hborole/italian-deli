@@ -2,6 +2,28 @@ const { query } = require('../configs/db.config');
 const BadRequestError = require('../errors/bad-request-error');
 const s3 = require('../configs/aws.config');
 
+const getUploadURL = async (req, res) => {
+  const { filename, fileType } = req.query;
+
+  if (!filename) {
+    throw new BadRequestError('Filename is required');
+  }
+
+  if (!fileType) {
+    throw new BadRequestError('File Type is required');
+  }
+
+  const url = await s3.getSignedUrlPromise('putObject', {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: 'products/' + filename,
+    ContentType: fileType,
+    Expires: 60 * 5,
+  });
+
+  console.log('Upload URL generated successfully...');
+  res.status(200).send({ url });
+};
+
 const createProduct = async (req, res) => {
   const { name, description, isActive, image, isFeatured, price, category_id } =
     req.body;
@@ -69,14 +91,25 @@ const getProduct = async (req, res) => {
   }
 
   try {
-    const product = await query('SELECT * FROM products WHERE id = ?', [id]);
+    let result = await query('SELECT * FROM products WHERE id = ?', [id]);
 
-    if (product.length === 0) {
+    if (result.length === 0) {
       throw new BadRequestError(`Product doesn't exist`);
     }
 
-    console.log(`Product found: ${product[0].name}`);
-    res.status(200).send({ product: product[0] });
+    let product = result[0];
+
+    product = {
+      ...product,
+      imageUrl: await s3.getSignedUrl('getObject', {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: 'products/' + product.image,
+      }),
+    };
+
+    console.log(`Product found: ${product.name}`);
+
+    res.status(200).send({ product });
   } catch (err) {
     console.log('Error while get product: ', err);
     throw new BadRequestError('Something went wrong');
@@ -89,6 +122,7 @@ const updateProduct = async (req, res) => {
     name,
     description,
     isActive,
+    oldImage,
     image,
     isFeatured,
     price,
@@ -108,6 +142,15 @@ const updateProduct = async (req, res) => {
 
   if (category.length === 0) {
     throw new BadRequestError('Category does not exist');
+  }
+
+  if (oldImage !== image) {
+    await s3
+      .deleteObject({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: 'categories/' + oldImage,
+      })
+      .promise();
   }
 
   try {
@@ -142,6 +185,15 @@ const deleteProduct = async (req, res) => {
     throw new BadRequestError(`Product doesn't exist`);
   }
 
+  // delete the image from the s3 bucket
+  const productImage = product[0].image;
+  await s3
+    .deleteObject({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: 'products/' + productImage,
+    })
+    .promise();
+
   try {
     const result = await query('DELETE FROM products WHERE id =? ', [id]);
 
@@ -152,20 +204,6 @@ const deleteProduct = async (req, res) => {
     console.log('Error while deleting product: ', err);
     throw new BadRequestError('Something went wrong');
   }
-};
-
-// Get signed url for uploading image to s3
-
-const uploadImage = async (req, res) => {
-  const { name } = req.body;
-
-  const url = await s3.getSignedUrlPromise('putObject', {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: name,
-    Expires: 60,
-  });
-
-  res.status(200).send({ name, url });
 };
 
 // --------------- ITEMS ---------------------
@@ -244,7 +282,7 @@ module.exports = {
   createProduct,
   getProducts,
   getProduct,
-  uploadImage,
+  getUploadURL,
   updateProduct,
   deleteProduct,
   addItem,

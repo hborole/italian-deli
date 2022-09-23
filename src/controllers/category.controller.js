@@ -99,12 +99,21 @@ const getCategory = async (req, res) => {
 };
 
 const updateCategory = async (req, res) => {
-  const { id, name, isActive, image } = req.body;
+  const { id, name, isActive, oldImage, image } = req.body;
 
   const category = await query('SELECT * FROM categories WHERE id = ?', [id]);
 
   if (category.length === 0) {
     throw new BadRequestError(`Category doesn't exist`);
+  }
+
+  if (oldImage !== image) {
+    await s3
+      .deleteObject({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: 'categories/' + oldImage,
+      })
+      .promise();
   }
 
   try {
@@ -140,6 +149,15 @@ const deleteCategory = async (req, res) => {
       `Cannot delete category while ${products.length} products are still in this category.`
     );
   }
+
+  // delete the image from the s3 bucket
+  const categoryImage = category[0].image;
+  await s3
+    .deleteObject({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: 'categories/' + categoryImage,
+    })
+    .promise();
 
   try {
     const result = await query('DELETE FROM categories WHERE id =? ', [id]);

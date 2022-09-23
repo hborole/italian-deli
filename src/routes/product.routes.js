@@ -6,6 +6,9 @@ const productController = require('../controllers/product.controller');
 
 const router = require('express').Router();
 
+// Get signed URL for uploading image to S3
+router.get('/upload', requireAuth, productController.getUploadURL);
+
 // Create Product
 router.post(
   '/',
@@ -50,15 +53,6 @@ router.delete(
   [body('id').notEmpty().withMessage('ID is required')],
   validateRequest,
   productController.deleteProduct
-);
-
-// Upload image
-router.post(
-  '/upload',
-  requireAuth,
-  [body('name').notEmpty().withMessage('Filename is required')],
-  validateRequest,
-  productController.uploadImage
 );
 
 // --------------- ITEMS ---------------------
