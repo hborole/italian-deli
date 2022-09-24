@@ -16,7 +16,7 @@ router.post(
   [
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('price')
-      .isNumeric()
+      .isFloat()
       .withMessage('Price is required and must be greater than 0'),
     body('category_id').notEmpty().withMessage('Category Id is required'),
   ],
@@ -38,7 +38,7 @@ router.put(
     body('id').notEmpty().withMessage('ID is required'),
     body('name').trim().notEmpty().withMessage('Name is required'),
     body('price')
-      .isNumeric()
+      .isFloat()
       .withMessage('Price is required and must be greater than 0'),
     body('category_id').notEmpty().withMessage('Category Id is required'),
   ],
