@@ -29,7 +29,7 @@ app.set('trust proxy', true);
 app.use(json());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: [process.env.FRONTEND_URL, process.env.ADMIN_FRONTEND_URL],
     credentials: true,
   })
 );

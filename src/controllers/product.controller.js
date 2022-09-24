@@ -2,6 +2,8 @@ const { query } = require('../configs/db.config');
 const BadRequestError = require('../errors/bad-request-error');
 const s3 = require('../configs/aws.config');
 
+// ------------------------------------------------------------------
+
 const getUploadURL = async (req, res) => {
   const { filename, fileType } = req.query;
 
@@ -23,6 +25,8 @@ const getUploadURL = async (req, res) => {
   console.log('Upload URL generated successfully...');
   res.status(200).send({ url });
 };
+
+// ------------------------------------------------------------------
 
 const createProduct = async (req, res) => {
   const { name, description, isActive, image, isFeatured, price, category_id } =
@@ -71,6 +75,8 @@ const createProduct = async (req, res) => {
   }
 };
 
+// ------------------------------------------------------------------
+
 const getProducts = async (req, res) => {
   try {
     const products = await query('SELECT * FROM products');
@@ -82,6 +88,32 @@ const getProducts = async (req, res) => {
     throw new BadRequestError('Something went wrong');
   }
 };
+
+// ------------------------------------------------------------------
+
+const getFeaturedProducts = async (req, res) => {
+  try {
+    let featuredProducts = await query(
+      'SELECT products.id AS id, products.name AS name, products.description AS description, products.isActive AS isActive, products.image AS image, products.isFeatured AS isFeatured, products.price AS price, products.category_id AS category_id, categories.name AS category FROM `products` INNER JOIN categories ON products.category_id = categories.id WHERE isFeatured = 1'
+    );
+
+    console.log(`Found featured products: ${featuredProducts.length}`);
+
+    featuredProducts = featuredProducts.map((product) => {
+      return {
+        ...product,
+        imageUrl: `${process.env.AWS_BUCKET_URL}/products/${product.image}`,
+      };
+    });
+
+    res.status(200).send({ featuredProducts });
+  } catch (err) {
+    console.log('Error while get featured products: ', err);
+    throw new BadRequestError('Something went wrong');
+  }
+};
+
+// ------------------------------------------------------------------
 
 const getProduct = async (req, res) => {
   const { id } = req.params;
@@ -115,6 +147,8 @@ const getProduct = async (req, res) => {
     throw new BadRequestError('Something went wrong');
   }
 };
+
+// ------------------------------------------------------------------
 
 const updateProduct = async (req, res) => {
   const {
@@ -175,6 +209,8 @@ const updateProduct = async (req, res) => {
   }
 };
 
+// ------------------------------------------------------------------
+
 const deleteProduct = async (req, res) => {
   const { id } = req.body;
 
@@ -208,6 +244,8 @@ const deleteProduct = async (req, res) => {
 
 // --------------- ITEMS ---------------------
 
+// ------------------------------------------------------------------
+
 const addItem = async (req, res) => {
   const { product_id } = req.body;
 
@@ -240,6 +278,8 @@ const addItem = async (req, res) => {
 
   res.status(200).send({ message: 'Cart item added/updated' });
 };
+
+// ------------------------------------------------------------------
 
 const removeItem = async (req, res) => {
   const { product_id } = req.body;
@@ -278,9 +318,12 @@ const removeItem = async (req, res) => {
   res.status(200).send({ message: 'Cart item removed' });
 };
 
+// ------------------------------------------------------------------
+
 module.exports = {
   createProduct,
   getProducts,
+  getFeaturedProducts,
   getProduct,
   getUploadURL,
   updateProduct,
