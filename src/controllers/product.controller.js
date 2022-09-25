@@ -79,7 +79,16 @@ const createProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
   try {
-    const products = await query('SELECT * FROM products');
+    let products = await query(
+      'SELECT products.id AS id, products.name AS name, products.description AS description, products.isActive AS isActive, products.image AS image, products.isFeatured AS isFeatured, products.price AS price, products.category_id AS category_id, categories.name AS category FROM `products` INNER JOIN categories ON products.category_id = categories.id'
+    );
+
+    products = products.map((product) => {
+      return {
+        ...product,
+        imageUrl: `${process.env.AWS_BUCKET_URL}/products/${product.image}`,
+      };
+    });
 
     console.log(`Found products: ${products.length}`);
     res.status(200).send({ products });
@@ -242,82 +251,6 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-// --------------- ITEMS ---------------------
-
-// ------------------------------------------------------------------
-
-const addItem = async (req, res) => {
-  const { product_id } = req.body;
-
-  // Check if product exists
-  const product = await query('SELECT * FROM products WHERE id = ?', [
-    product_id,
-  ]);
-
-  if (product.length === 0) {
-    throw new BadRequestError(`Product doesn't exist`);
-  }
-
-  // Check if the item is already added to cart
-  const items = await query(
-    'SELECT * FROM cart_items WHERE product_id = ? AND customer_id = ?',
-    [product_id, req.currentUser.id]
-  );
-
-  if (items.length > 0) {
-    const result = await query(
-      'UPDATE cart_items SET quantity = quantity + 1 WHERE product_id = ? AND customer_id = ?',
-      [product_id, req.currentUser.id]
-    );
-  } else {
-    const result = await query(
-      'INSERT INTO cart_items (quantity, product_id, customer_id) VALUES (?, ?, ?)',
-      [1, product_id, req.currentUser.id]
-    );
-  }
-
-  res.status(200).send({ message: 'Cart item added/updated' });
-};
-
-// ------------------------------------------------------------------
-
-const removeItem = async (req, res) => {
-  const { product_id } = req.body;
-
-  // Check if product exists
-  const product = await query('SELECT * FROM products WHERE id = ?', [
-    product_id,
-  ]);
-
-  if (product.length === 0) {
-    throw new BadRequestError(`Product doesn't exist`);
-  }
-
-  // Check if the item is already added to cart
-  const items = await query(
-    'SELECT * FROM cart_items WHERE product_id = ? AND customer_id = ?',
-    [product_id, req.currentUser.id]
-  );
-
-  if (items.length === 0) {
-    throw new BadRequestError('Item not found');
-  }
-
-  if (items[0].quantity > 1) {
-    const result = await query(
-      'UPDATE cart_items SET quantity = quantity - 1 WHERE product_id = ? AND customer_id = ?',
-      [product_id, req.currentUser.id]
-    );
-  } else {
-    const result = await query(
-      'DELETE FROM cart_items WHERE product_id = ? AND customer_id = ?',
-      [product_id, req.currentUser.id]
-    );
-  }
-
-  res.status(200).send({ message: 'Cart item removed' });
-};
-
 // ------------------------------------------------------------------
 
 module.exports = {
@@ -328,6 +261,4 @@ module.exports = {
   getUploadURL,
   updateProduct,
   deleteProduct,
-  addItem,
-  removeItem,
 };

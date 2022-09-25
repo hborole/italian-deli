@@ -20,6 +20,7 @@ const currentUser = require('./src/middlewares/current-user');
 const authRoutes = require('./src/routes/auth.routes');
 const categoryRoutes = require('./src/routes/category.routes');
 const productRoutes = require('./src/routes/product.routes');
+const cartRoutes = require('./src/routes/cart.routes');
 const customerRoutes = require('./src/routes/customer.routes');
 const orderRoutes = require('./src/routes/order.routes');
 
@@ -48,6 +49,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/cart', cartRoutes);
 
 app.all('*', async (req, res) => {
   throw new NotFoundError();

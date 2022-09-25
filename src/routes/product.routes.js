@@ -58,22 +58,4 @@ router.delete(
   productController.deleteProduct
 );
 
-// --------------- ITEMS ---------------------
-
-router.post(
-  '/add-item',
-  requireAuth,
-  [body('product_id').isNumeric().withMessage('Product is required')],
-  validateRequest,
-  productController.addItem
-);
-
-router.post(
-  '/remove-item',
-  requireAuth,
-  [body('product_id').isNumeric().withMessage('Product is required')],
-  validateRequest,
-  productController.removeItem
-);
-
 module.exports = router;
