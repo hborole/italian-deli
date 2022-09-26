@@ -9,7 +9,7 @@ const getCart = async (req, res) => {
   const { id } = req.currentUser;
 
   try {
-    const cart = await query(
+    let cart = await query(
       'SELECT c.id, c.quantity, c.product_id, c.customer_id, p.name, p.price, p.image FROM `cart_items` AS c INNER JOIN products AS p ON p.id = c.product_id WHERE customer_id = ?',
       [id]
     );
@@ -19,6 +19,13 @@ const getCart = async (req, res) => {
     const total = cart.reduce((acc, item) => {
       return acc + item.price * item.quantity;
     }, 0);
+
+    cart = cart.map((product) => {
+      return {
+        ...product,
+        imageUrl: `${process.env.AWS_BUCKET_URL}/products/${product.image}`,
+      };
+    });
 
     res.status(200).send({ cart, total });
   } catch (err) {
