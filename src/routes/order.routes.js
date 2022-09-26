@@ -6,7 +6,13 @@ const orderController = require('../controllers/order.controller');
 
 const router = require('express').Router();
 
-router.post('/', requireAuth, orderController.createOrder);
+router.post(
+  '/',
+  requireAuth,
+  [body('token').notEmpty().withMessage('Token is required')],
+  validateRequest,
+  orderController.createOrder
+);
 
 router.get('/', requireAuth, orderController.getOrders);
 

@@ -1,6 +1,7 @@
 const { query } = require('../configs/db.config');
 
 const createOrder = async (req, res) => {
+  const { token } = req.body;
   // Get the cart items for the current user
   const cartItems = await query(
     'SELECT cart_items.quantity, products.price, products.name FROM `cart_items` INNER JOIN `products` ON cart_items.product_id = products.id WHERE customer_id = ?',
@@ -13,11 +14,24 @@ const createOrder = async (req, res) => {
 
   const date = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
+  // Create new Payment
+
+  const payment = await query(
+    'INSERT INTO `payments` (`order_id`, `amount`, `token`, `payment_date`) VALUES (?, ?, ?, ?);',
+    [null, total, token.id, date]
+  );
+
   // Create a new order
   const order = await query(
-    'INSERT INTO orders (total, orderDate, status, customer_id) VALUES (?, ?, ?, ?)',
-    [total, date, 'SUCCESS', req.currentUser.id]
+    'INSERT INTO orders (total, order_date, status, payment_id, customer_id) VALUES (?, ?, ?, ?, ?)',
+    [total, date, 'SUCCESS', payment.insertId, req.currentUser.id]
   );
+
+  // Add order id into payment
+  await query('UPDATE payments SET order_id = ? WHERE id = ?', [
+    order.insertId,
+    payment.insertId,
+  ]);
 
   // Create order items
   const orderItems = await query(
