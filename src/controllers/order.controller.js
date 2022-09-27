@@ -1,4 +1,5 @@
 const { query } = require('../configs/db.config');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const createOrder = async (req, res) => {
   const { token } = req.body;
@@ -50,6 +51,14 @@ const createOrder = async (req, res) => {
   await query('DELETE FROM cart_items WHERE customer_id = ?', [
     req.currentUser.id,
   ]);
+
+  // Create a stripe charge
+  const charge = await stripe.charges.create({
+    amount: total * 100,
+    currency: 'gbp',
+    source: token.id,
+    description: `Order ${order.insertId}`,
+  });
 
   res.status(201).send({
     message: 'Order created successfully',
