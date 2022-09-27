@@ -69,14 +69,82 @@ const getOrders = async (req, res) => {
   try {
     let orders;
     if (req.currentUser.isAdmin) {
-      orders = await query('SELECT * FROM orders');
+      console.log('admin');
+      orders = await query(
+        'SELECT o.id, o.total, o.order_date, o.status, o.payment_id, o.customer_id, oi.price, oi.name, oi.quantity, c.first_name, c.last_name, c.email, c.billing_address, c.shipping_address FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id INNER JOIN `customers` AS c ON o.customer_id = c.id;'
+      );
+
+      orders = orders.reduce((acc, order) => {
+        const existingOrder = acc.find((o) => o.id === order.id);
+
+        if (existingOrder) {
+          existingOrder.order_items.push({
+            name: order.name,
+            price: order.price,
+            quantity: order.quantity,
+          });
+        } else {
+          acc.push({
+            id: order.id,
+            total: order.total,
+            order_date: order.order_date,
+            status: order.status,
+            payment_id: order.payment_id,
+            customer_id: order.customer_id,
+            first_name: order.first_name,
+            last_name: order.last_name,
+            email: order.email,
+            billing_address: order.billing_address,
+            shipping_address: order.shipping_address,
+            order_items: [
+              {
+                name: order.name,
+                price: order.price,
+                quantity: order.quantity,
+              },
+            ],
+          });
+        }
+
+        return acc;
+      }, []);
     } else {
-      orders = await query('SELECT * FROM orders WHERE customer_id = ?', [
-        req.currentUser.id,
-      ]);
+      orders = await query(
+        'SELECT o.id, o.total, o.order_date, o.status, o.payment_id, oi.price, oi.name, oi.quantity FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id WHERE customer_id = ?',
+        [req.currentUser.id]
+      );
+
+      orders = orders.reduce((acc, order) => {
+        const existingOrder = acc.find((o) => o.id === order.id);
+
+        if (existingOrder) {
+          existingOrder.order_items.push({
+            name: order.name,
+            price: order.price,
+            quantity: order.quantity,
+          });
+        } else {
+          acc.push({
+            id: order.id,
+            total: order.total,
+            order_date: order.order_date,
+            status: order.status,
+            payment_id: order.payment_id,
+            order_items: [
+              {
+                name: order.name,
+                price: order.price,
+                quantity: order.quantity,
+              },
+            ],
+          });
+        }
+
+        return acc;
+      }, []);
     }
 
-    console.log(`Found orders: ${orders.length}`);
+    console.log(`Found orders: ${orders}`);
     res.status(200).send({ orders });
   } catch (err) {
     console.log('Error while get orders: ', err);
