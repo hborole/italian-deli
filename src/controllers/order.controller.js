@@ -2,7 +2,7 @@ const { query } = require('../configs/db.config');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const createOrder = async (req, res) => {
-  const { token } = req.body;
+  const { token, note } = req.body;
   // Get the cart items for the current user
   const cartItems = await query(
     'SELECT cart_items.quantity, products.price, products.name FROM `cart_items` INNER JOIN `products` ON cart_items.product_id = products.id WHERE customer_id = ?',
@@ -24,8 +24,8 @@ const createOrder = async (req, res) => {
 
   // Create a new order
   const order = await query(
-    'INSERT INTO orders (total, order_date, status, payment_id, customer_id) VALUES (?, ?, ?, ?, ?)',
-    [total, date, 'SUCCESS', payment.insertId, req.currentUser.id]
+    'INSERT INTO orders (total, order_date, status, note, payment_id, customer_id) VALUES (?, ?, ?, ?, ?, ?)',
+    [total, date, 'SUCCESS', note, payment.insertId, req.currentUser.id]
   );
 
   // Add order id into payment
@@ -71,7 +71,7 @@ const getOrders = async (req, res) => {
     if (req.currentUser.isAdmin) {
       console.log('admin');
       orders = await query(
-        'SELECT o.id, o.total, o.order_date, o.status, o.payment_id, o.customer_id, oi.price, oi.name, oi.quantity, c.first_name, c.last_name, c.email, c.billing_address, c.shipping_address FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id INNER JOIN `customers` AS c ON o.customer_id = c.id;'
+        'SELECT o.id, o.total, o.order_date, o.status, o.note, o.payment_id, o.customer_id, oi.price, oi.name, oi.quantity, c.first_name, c.last_name, c.email, c.billing_address, c.shipping_address FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id INNER JOIN `customers` AS c ON o.customer_id = c.id;'
       );
 
       orders = orders.reduce((acc, order) => {
@@ -89,6 +89,7 @@ const getOrders = async (req, res) => {
             total: order.total,
             order_date: order.order_date,
             status: order.status,
+            note: order.note,
             payment_id: order.payment_id,
             customer_id: order.customer_id,
             first_name: order.first_name,
@@ -110,7 +111,7 @@ const getOrders = async (req, res) => {
       }, []);
     } else {
       orders = await query(
-        'SELECT o.id, o.total, o.order_date, o.status, o.payment_id, oi.price, oi.name, oi.quantity FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id WHERE customer_id = ?',
+        'SELECT o.id, o.total, o.order_date, o.status, o.note, o.payment_id, oi.price, oi.name, oi.quantity FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id WHERE customer_id = ?',
         [req.currentUser.id]
       );
 
@@ -129,6 +130,7 @@ const getOrders = async (req, res) => {
             total: order.total,
             order_date: order.order_date,
             status: order.status,
+            note: order.note,
             payment_id: order.payment_id,
             order_items: [
               {
@@ -174,6 +176,7 @@ const getOrder = async (req, res) => {
       total: result[0].total,
       orderDate: result[0].orderDate,
       status: result[0].status,
+      note: result[0].note,
       orderItems: result.map((item) => ({
         id: item.id,
         quantity: item.quantity,
