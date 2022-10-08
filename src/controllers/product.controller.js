@@ -1,6 +1,6 @@
 const { query } = require('../configs/db.config');
 const BadRequestError = require('../errors/bad-request-error');
-const s3 = require('../configs/aws.config');
+const { s3 } = require('../configs/aws.config');
 
 // ------------------------------------------------------------------
 

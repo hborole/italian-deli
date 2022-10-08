@@ -1,5 +1,57 @@
 const { query } = require('../configs/db.config');
+const { ses } = require('../configs/aws.config');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// ------------------------------------------------------------------
+
+const sendEmail = async () => {
+  const params = {
+    Destination: {
+      ToAddresses: ['noreply.italiandeli@gmail.com'],
+    },
+    Message: {
+      Body: {
+        Html: {
+          Charset: 'UTF-8',
+          Data: `<html>
+            <head>
+              <title>Order Confirmation</title>
+            </head>
+            <body>
+              <h1>Order Confirmation</h1>
+              <p>New order has been placed.</p>
+            </body>
+          </html>`,
+        },
+      },
+      Subject: {
+        Charset: 'UTF-8',
+        Data: 'Order Confirmation',
+      },
+    },
+    Source: 'noreply.italiandeli@gmail.com',
+  };
+
+  const sendPromise = ses.sendEmail(params).promise();
+  // Handle promise's fulfilled/rejected states
+  sendPromise
+    .then(function (data) {
+      console.log(data.MessageId);
+    })
+    .catch(function (err) {
+      console.error(err, err.stack);
+    });
+
+  // try {
+  //   const data = await ses.sendEmail(params).promise();
+  //   console.log('Email sent successfully');
+  //   console.log(data);
+  // } catch (error) {
+  //   console.log(error);
+  // }
+};
+
+// ------------------------------------------------------------------
 
 const createOrder = async (req, res) => {
   const { token, note } = req.body;
@@ -60,10 +112,14 @@ const createOrder = async (req, res) => {
     description: `Order ${order.insertId}`,
   });
 
+  sendEmail();
+
   res.status(201).send({
     message: 'Order created successfully',
   });
 };
+
+// ------------------------------------------------------------------
 
 const getOrders = async (req, res) => {
   try {
@@ -154,6 +210,8 @@ const getOrders = async (req, res) => {
   }
 };
 
+// ------------------------------------------------------------------
+
 const getOrder = async (req, res) => {
   const { id } = req.params;
 
@@ -191,6 +249,8 @@ const getOrder = async (req, res) => {
     throw new BadRequestError('Something went wrong');
   }
 };
+
+// ------------------------------------------------------------------
 
 const cancelOrder = async (req, res) => {
   const { id } = req.body;
