@@ -9,9 +9,9 @@ const signUp = async (req, res) => {
   const { email, password, first_name, last_name } = req.body;
 
   // Check if the user still exists
-  const users = await query('SELECT * FROM users WHERE email = ?', [email]);
+  const admins = await query('SELECT * FROM admins WHERE email = ?', [email]);
 
-  if (users.length > 0) {
+  if (admins.length > 0) {
     throw new BadRequestError('Email in use');
   }
 
@@ -21,7 +21,7 @@ const signUp = async (req, res) => {
   try {
     // Create a new user
     const newUser = await query(
-      'INSERT INTO users (email, password, first_name, last_name) VALUES (?, ?, ?, ?)',
+      'INSERT INTO admins (email, password, first_name, last_name) VALUES (?, ?, ?, ?)',
       [email, hashedPassword, first_name, last_name]
     );
 
@@ -52,14 +52,14 @@ const signIn = async (req, res) => {
   const { email, password } = req.body;
 
   // Check if the user still exists
-  const users = await query('SELECT * FROM users WHERE email = ?', [email]);
+  const admins = await query('SELECT * FROM admins WHERE email = ?', [email]);
 
-  if (users.length === 0) {
+  if (admins.length === 0) {
     throw new BadRequestError('Invalid credentials');
   }
 
   // Get the user
-  const user = users[0];
+  const user = admins[0];
 
   // Check if the password is correct
   const passwordsMatch = await Password.compare(user.password, password);

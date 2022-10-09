@@ -41,14 +41,6 @@ const sendEmail = async () => {
     .catch(function (err) {
       console.error(err, err.stack);
     });
-
-  // try {
-  //   const data = await ses.sendEmail(params).promise();
-  //   console.log('Email sent successfully');
-  //   console.log(data);
-  // } catch (error) {
-  //   console.log(error);
-  // }
 };
 
 // ------------------------------------------------------------------
@@ -127,7 +119,7 @@ const getOrders = async (req, res) => {
     if (req.currentUser.isAdmin) {
       console.log('admin');
       orders = await query(
-        'SELECT o.id, o.total, o.order_date, o.status, o.note, o.payment_id, o.customer_id, oi.price, oi.name, oi.quantity, c.first_name, c.last_name, c.email, c.billing_address, c.shipping_address FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id INNER JOIN `customers` AS c ON o.customer_id = c.id;'
+        'SELECT o.id, o.total, o.order_date, o.status, o.note, o.payment_id, o.customer_id, oi.price, oi.name, oi.quantity, c.first_name, c.last_name, c.email, c.billing_address, c.shipping_address FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id INNER JOIN `customers` AS c ON o.customer_id = c.id ORDER BY o.order_date DESC;'
       );
 
       orders = orders.reduce((acc, order) => {
@@ -167,7 +159,7 @@ const getOrders = async (req, res) => {
       }, []);
     } else {
       orders = await query(
-        'SELECT o.id, o.total, o.order_date, o.status, o.note, o.payment_id, oi.price, oi.name, oi.quantity FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id WHERE customer_id = ?',
+        'SELECT o.id, o.total, o.order_date, o.status, o.note, o.payment_id, oi.price, oi.name, oi.quantity FROM `orders` AS o INNER JOIN `order_items` AS oi ON o.id = oi.order_id WHERE customer_id = ? ORDER BY o.order_date DESC',
         [req.currentUser.id]
       );
 
@@ -202,7 +194,7 @@ const getOrders = async (req, res) => {
       }, []);
     }
 
-    console.log(`Found orders: ${orders}`);
+    console.log(`Found orders: ${orders.length}`);
     res.status(200).send({ orders });
   } catch (err) {
     console.log('Error while get orders: ', err);
